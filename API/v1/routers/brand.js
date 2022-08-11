@@ -99,4 +99,21 @@ router.delete('/delete/:id_brand', Auth.authenGTModer, async (req, res, next) =>
     }
 })
 
+router.get('/list',  async (req, res, next) => {
+    try {
+
+        let getListBrand =  await Brand.getListBrand();
+        return res.status(200).json({
+            message:'lấy danh mục sản phẩm thành công',
+            data: getListBrand
+        })
+        
+        
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
 module.exports =router;

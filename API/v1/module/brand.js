@@ -58,4 +58,15 @@ db.deleteBrand = (id_brand) => {
     })
 }
 
+db.getListBrand = () => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT *  FROM brand",
+            [],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows);
+            })
+    })
+}
+
 module.exports = db;

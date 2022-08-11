@@ -58,4 +58,15 @@ db.deleteCategory = (idCategory) => {
     })
 }
 
+db.getListCategory = () => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT *  FROM category",
+            [],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows);
+            })
+    })
+}
+
 module.exports = db;

@@ -98,4 +98,21 @@ router.delete('/delete/:id_category', Auth.authenGTModer, async (req, res, next)
     }
 })
 
+router.get('/list',  async (req, res, next) => {
+    try {
+
+        let listCategory =  await Category.getListCategory();
+        return res.status(200).json({
+            message:'lấy danh mục sản phẩm thành công',
+            data: listCategory
+        })
+        
+        
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
 module.exports =router;

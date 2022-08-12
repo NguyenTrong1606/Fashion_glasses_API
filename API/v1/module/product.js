@@ -12,8 +12,8 @@ db.getListProduct = (page = 0) => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 ORDER BY discount DESC LIMIT 20 OFFSET $1",
-                [(page - 1) * 20], (err, result) => {
+            pool.query("SELECT id_product FROM product WHERE quantity  > 0 ORDER BY discount DESC LIMIT 12 OFFSET $1",
+                [(page - 1) * 12], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
                 })
@@ -33,8 +33,8 @@ db.getListProductByCategory = (id_category ,page = 0) => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_category = $1 ORDER BY discount DESC LIMIT 20 OFFSET $2",
-                [id_category, (page - 1) * 20], (err, result) => {
+            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_category = $1 ORDER BY discount DESC LIMIT 12 OFFSET $2",
+                [id_category, (page - 1) * 12], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
                 })
@@ -54,8 +54,8 @@ db.getListProductByBrand = (id_brand ,page = 0) => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_brand = $1 ORDER BY discount DESC LIMIT 20 OFFSET $2",
-                [id_brand, (page - 1) * 20], (err, result) => {
+            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_brand = $1 ORDER BY discount DESC LIMIT 12 OFFSET $2",
+                [id_brand, (page - 1) * 12], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
                 })
@@ -240,8 +240,8 @@ db.getSearch = (search, page = 0) => {
         return new Promise((resolve, reject) => {
             pool.query(`select id_product
                 from product
-                where lower(name_product) like $1 LIMIT 10 OFFSET $2`,
-                ['%' + search + '%', (page - 1) * 10],
+                where lower(name_product) like $1 LIMIT 12 OFFSET $2`,
+                ['%' + search + '%', (page - 1) * 12],
                 (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);

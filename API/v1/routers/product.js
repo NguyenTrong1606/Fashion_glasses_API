@@ -426,6 +426,7 @@ router.get('/', async (req, res, next) => {
         let ids;
         if (page) ids = await Product.getSearch(k, page);
         else ids = await Product.getSearch(k);
+        
 
         for (let productId of ids) {
             let product = await Product.selectId(productId.id_product);

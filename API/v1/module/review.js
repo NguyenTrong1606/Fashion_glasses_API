@@ -25,7 +25,7 @@ db.addReview = (id_account, id_product, star_number, content) => {
 
 db.getListReviewOfProduct = (id_product) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT * FROM review  WHERE id_product = $1",
+        pool.query("SELECT id_review, id_product, id_account, content, star_number, TO_CHAR(date_time:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_time:: time, 'hh24:mi') AS time FROM review  WHERE id_product = $1",
             [id_product],
             (err, result) => {
                 if (err) return reject(err);

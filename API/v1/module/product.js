@@ -22,6 +22,17 @@ db.getListProduct = (page = 0) => {
 
 }
 
+db.getListProductRamdom = () => {
+        return new Promise((resolve, reject) => {
+            pool.query("SELECT id_product FROM product WHERE quantity  > 0 ORDER BY random() limit 4",
+                [], (err, result) => {
+                    if (err) return reject(err);
+                    return resolve(result.rows);
+                })
+        })
+
+}
+
 db.getListProductByCategory = (id_category ,page = 0) => {
     if (page === 0) {
         return new Promise((resolve, reject) => {

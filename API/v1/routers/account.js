@@ -164,7 +164,7 @@ router.get('/information', Auth.authenGTUser, async (req, res, next) => {
         }
 
         return res.status(200).json({
-            message: 'thông tin tài khoản thành công',
+            message: 'Lấy thông tin tài khoản thành công',
             data: data
         });
 

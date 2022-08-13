@@ -185,6 +185,44 @@ router.get('/all', async (req, res, next) => {
     }
 })
 
+
+//lấy 4 sản phẩm bất kif
+router.get('/ramdom', async (req, res, next) => {
+    try {
+        let productsID  = await Product.getListProductRamdom();
+        
+        let data = [];
+
+        for(let i = 0; i < productsID.length; i++){
+            let product = await Product.selectId(productsID[i].id_product);
+            if(product.discount > 0){
+                let valid = await Product.check(product.id_product);
+                if(valid){
+                    product = await Product.updateDiscount(productsID[i].id_product, 0);
+                }
+            }
+            let images = [];
+            let imgs = await Product.getAllImgById(product.id_product);
+            
+            for(let i = 0; i< imgs.length; i++){
+                images.push(imgs[i].image);
+            }
+            product['images'] = images;
+
+            data.push(product);
+        }
+
+        
+        return res.status(200).json({
+            message:'lấy ds sản phẩm thành công',
+            data : data
+        })
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
 //lấy ds sản phẩm theo category
 router.get('/category/:id_category', async (req, res, next) => {
     try {

@@ -92,7 +92,7 @@ db.selectAccountComment = (id_cmt) => {
 
 db.updateComment = (id_cmt, content) => {
     return new Promise((resolve, reject) => {
-        pool.query("UPDATE comment SET content = $1 where id_cmt = $2 RETURNING *",
+        pool.query("UPDATE comment SET content = $1 where id_cmt = $2 RETURNING *, TO_CHAR(date_time:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_time:: time, 'hh24:mi') AS time",
             [content, id_cmt],
             (err, result) => {
                 if (err) return reject(err);

@@ -64,6 +64,8 @@ router.post('/:id_product/comment', Auth.authenGTUser, async (req, res, next) =>
         if (productExists) {
             if (content) {
                 const comment = await Comment.addCommentParent(id_account, id_product, content)
+                comment['account'] = await Account.selectId(id_account)
+                comment['commentChildren'] = []
                 return res.status(200).json({
                     message: "Bình luận thành công",
                     data: comment
@@ -112,6 +114,8 @@ router.post('/:id_product/comment/:id_cmt_parent/reply', Auth.authenGTUser, asyn
         if (productExists) {
             if (content) {
                 const comment = await Comment.addCommentChildren(id_account, id_product, content, id_cmt_parent)
+                comment['account'] = await Account.selectId(comment.id_account)
+                
                 return res.status(200).json({
                     message: "Trả lời bình luận thành công",
                     data: comment
@@ -203,14 +207,35 @@ router.put('/:id_product/comment/:id_cmt/update', Auth.authenGTUser, async (req,
                 message: 'Bình luận không tồn tại'
             })
         }
-
         const id_account_comment = await Comment.selectAccountComment(id_cmt)
         if (+id_account === +id_account_comment) {
             if (content) {
                 const comment = await Comment.updateComment(id_cmt, content)
+                // comment['commentChildren'] = await Comment.getListCommentChildren(id_cmt)
+                let commentChildren = []
+                const listChildren = await Comment.listCommentChildren(id_cmt, id_product)
+                const account = await Account.selectId(comment.id_account)
+                if (listChildren.length > 0) {
+                    for (let i = 0; i < listChildren.length; i++) {
+                        const account = await Account.selectId(listChildren[i].id_account)
+
+                        commentChildren.push({
+                            account: account,
+                            id_cmt: listChildren[i].id_cmt,
+                            content: listChildren[i].content,
+                            day: listChildren[i].day,
+                            time: listChildren[i].time,
+                        })
+                    }
+                }
+
+                comment['account'] = account
+                comment['commentChildren'] = commentChildren
+                
                 return res.status(200).json({
                     message: "Thay đổi nội dung bình luận thành công",
                     data: comment
+
                 })
             } else {
                 return res.status(400).json({
@@ -254,7 +279,7 @@ router.delete('/:id_product/comment/:id_cmt/delete', Auth.authenGTUser, async (r
         if (+id_account === +id_account_comment) {
             const comment = await Comment.delete(id_cmt)
             return res.status(200).json({
-                message: "Xóa tất cả bình luận thành công",
+                message: "Xóa bình luận thành công",
             })
         } else {
             return res.status(401).json({

@@ -40,6 +40,7 @@ router.post('/:id_product', Auth.authenGTUser, async (req, res, next) => {
                 })
             }
             let review = await Review.addReview(id_account, id_product, star_number, content);
+            review['account'] = await Account.selectId(id_account)
             return res.status(200).json({
                 message: 'đánh giá thành công',
                 data : review

@@ -68,6 +68,17 @@ db.selectItems = (id_cart) => {
     });
 }
 
+db.selectItem = (id_cart, id_product) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM cart_item where id_cart =$1 AND id_product =$2",
+            [id_cart, id_product],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows[0]);
+            });
+    });
+}
+
 db.updateCartItem = (id_item, quantity) => {
     return new Promise((resolve, reject) => {
         pool.query("UPDATE cart_item SET quantity = $2 WHERE id_item=$1 RETURNING *",

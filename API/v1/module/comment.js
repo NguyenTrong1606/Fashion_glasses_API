@@ -34,15 +34,28 @@ db.addCommentChildren = (id_account, id_product, content, id_cmt_parent) => {
     });
 }
 
-db.listCommentParent = (id_product) => {
-    return new Promise((resolve, reject) => {
-        pool.query("SELECT id_cmt, id_account, content, TO_CHAR(date_time:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_time:: time, 'hh24:mi') AS time FROM comment WHERE id_product = $1 and id_cmt_parent = 0 ORDER BY date_time DESC",
-            [id_product],
-            (err, result) => {
-                if (err) return reject(err);
-                return resolve(result.rows);
-            })
-    })
+db.listCommentParent = (id_product, page = 0) => {
+    if (page === 0) {
+        return new Promise((resolve, reject) => {
+            pool.query("SELECT id_cmt, id_account, content, TO_CHAR(date_time:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_time:: time, 'hh24:mi') AS time FROM comment WHERE id_product = $1 and id_cmt_parent = 0 ORDER BY date_time DESC",
+                [id_product],
+                (err, result) => {
+                    if (err) return reject(err);
+                    return resolve(result.rows);
+                })
+        })
+    }
+    else{
+        return new Promise((resolve, reject) => {
+            pool.query("SELECT id_cmt, id_account, content, TO_CHAR(date_time:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_time:: time, 'hh24:mi') AS time FROM comment WHERE id_product = $1 and id_cmt_parent = 0 ORDER BY date_time DESC",
+                [id_product,(page - 1) * 10],
+                (err, result) => {
+                    if (err) return reject(err);
+                    return resolve(result.rows);
+                })
+        })
+    }
+    
 }
 
 db.listCommentChildren = (id_cmt, id_product) => {

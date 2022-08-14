@@ -18,10 +18,23 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
             let order_details = [];
             let cart = await Cart.selectIdCart(id_account);
             let items = await Cart.selectItems(cart.id_cart);
+            let quantityProduct = [];
+                for (let i = 0; i < items.length; i++){
+                    let product = await Product.selectId(items[i].id_product);
+                    let quantity = +product.quantity - +items[i].quantity;
+                    if(quantity < 0){
+                        return res.status(400).json({
+                            message: `Số lượng sản phẩm ${product.name_product} trong kho không đủ, chỉ còn ${product.quantity} sản phẩm`,
+                        }) 
+                    }
+                    quantityProduct.push(quantity)                    
+                }
             for(let i = 0; i < items.length; i ++){
                 let product = await Product.selectId(items[i].id_product);
                 let priceProduct = product.price -(product.price * product.discount/100);
                 let order_dettail = await Orders.addOrderDetail(order.id_order, items[i].id_product, items[i].quantity,priceProduct);
+                if(quantityProduct[i] == 0) await Product.updateQuantity(items[i].id_product, 0)
+                    else await Product.updateQuantity(items[i].id_product, quantityProduct[i])
                 let item = await Cart.selectIdItem(cart.id_cart, items[i].id_product);
                 await Cart.deleteCartItem(item.id_item);
                 order_details.push(order_dettail);
@@ -89,27 +102,21 @@ router.put('/:id_order/:status', Auth.authenGTModer, async (req, res, next) => {
 
         let orderExist = await Orders.hasId(id_order);
         if(orderExist){
-            if(status == 1){
+            if(status == 2){
                 let order_details = await Orders.getOrderDetailByIdOrder(id_order);
-                let quantityProduct =[];
+                let quantityProduct = [];
                 for (let i = 0; i < order_details.length; i++){
                     let product = await Product.selectId(order_details[i].id_product);
-                    let quantity = +product.quantity - +order_details[i].quantity;
-                    console.log(quantity);
-                    if(quantity< 0){
-                        return res.status(400).json({
-                            message: `Số lượng sản phẩm ${product.name_product} trong kho không đủ`,
-                        }) 
-                    }
-                    quantityProduct.push(quantity)                    
+                    let quantity = +product.quantity +order_details[i].quantity;
+                    console.log(quantity); 
+                    await Product.updateQuantity(order_details[i].id_product, quantity)                 
                 }
-                console.log(quantityProduct);
 
-                for(let i = 0; i < order_details.length; i++){
-                    console.log(quantityProduct[i]);
-                    if(quantityProduct[i] == 0) await Product.updateQuantity(order_details[i].id_product, 0)
-                    else await Product.updateQuantity(order_details[i].id_product, quantityProduct[i])
-                }
+                // for(let i = 0; i < order_details.length; i++){
+                //     console.log(quantityProduct[i]);
+                //     if(quantityProduct[i] == 0) await Product.updateQuantity(order_details[i].id_product, 0)
+                //     else await Product.updateQuantity(order_details[i].id_product, quantityProduct[i])
+                // }
 
              }
             let order = await Orders.updateStatus(id_order, employee.id_employee, status);

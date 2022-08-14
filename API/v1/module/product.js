@@ -4,7 +4,7 @@ const db = {};
 db.getListProduct = (page = 0) => {
     if (page === 0) {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 ORDER BY discount DESC",
+            pool.query("SELECT id_product FROM product  ORDER BY discount DESC",
                 [], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
@@ -12,7 +12,7 @@ db.getListProduct = (page = 0) => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 ORDER BY discount DESC LIMIT 12 OFFSET $1",
+            pool.query("SELECT id_product FROM product ORDER BY discount DESC LIMIT 12 OFFSET $1",
                 [(page - 1) * 12], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
@@ -36,7 +36,7 @@ db.getListProductRamdom = () => {
 db.getListProductByCategory = (id_category ,page = 0) => {
     if (page === 0) {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_category = $1 ORDER BY discount DESC",
+            pool.query("SELECT id_product FROM product WHERE  id_category = $1 ORDER BY discount DESC",
                 [id_category], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
@@ -44,7 +44,7 @@ db.getListProductByCategory = (id_category ,page = 0) => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_category = $1 ORDER BY discount DESC LIMIT 12 OFFSET $2",
+            pool.query("SELECT id_product FROM product WHERE  id_category = $1 ORDER BY discount DESC LIMIT 12 OFFSET $2",
                 [id_category, (page - 1) * 12], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
@@ -57,7 +57,7 @@ db.getListProductByCategory = (id_category ,page = 0) => {
 db.getListProductByBrand = (id_brand ,page = 0) => {
     if (page === 0) {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_brand = $1 ORDER BY discount DESC",
+            pool.query("SELECT id_product FROM product WHERE  id_brand = $1 ORDER BY discount DESC",
                 [id_brand], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
@@ -65,7 +65,7 @@ db.getListProductByBrand = (id_brand ,page = 0) => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("SELECT id_product FROM product WHERE quantity  > 0 AND id_brand = $1 ORDER BY discount DESC LIMIT 12 OFFSET $2",
+            pool.query("SELECT id_product FROM product WHERE  id_brand = $1 ORDER BY discount DESC LIMIT 12 OFFSET $2",
                 [id_brand, (page - 1) * 12], (err, result) => {
                     if (err) return reject(err);
                     return resolve(result.rows);
@@ -110,7 +110,7 @@ db.hasNameProduct = (name_product) => {
 
 db.getAllImgById = (id_product) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT image FROM product_image  WHERE id_product = $1",
+        pool.query("SELECT image FROM product_image  WHERE id_product = $1 ",
             [id_product],
             (err, result) => {
                 if (err) return reject(err);

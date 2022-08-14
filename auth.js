@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-
 const auth = {};
 
 auth.tokenData = (req) => {

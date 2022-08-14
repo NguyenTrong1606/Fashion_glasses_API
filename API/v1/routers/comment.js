@@ -11,10 +11,12 @@ const Account = require('../module/account')
 router.get('/:id_product/comment', async (req, res, next) => {
     const id_product = req.params.id_product
     let data = []
-
+    let page = req.query.page;
     const productExists = await Product.hasId(id_product)
     if (productExists) {
-        const listParent = await Comment.listCommentParent(id_product)
+        let listParent;
+        if(page==0) {listParent = await Comment.listCommentParent(id_product);}
+        else {listParent = await Comment.listCommentParent(id_product, page);}
         for (let i = 0; i < listParent.length; i++) {
             let commentChildren = []
             const listChildren = await Comment.listCommentChildren(listParent[i].id_cmt, id_product)

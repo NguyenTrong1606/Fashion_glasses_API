@@ -13,8 +13,10 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
     try {
         let id_account = Auth.tokenData(req).id_account;
         let id_voucher = req.body.id_voucher;
-        if(!id_voucher){
-            let order = await Orders.addOrder(id_account);
+        let address = req.body.address;
+        if(address){
+            if(id_voucher==0){
+            let order = await Orders.addOrder(id_account,address);
             let order_details = [];
             let cart = await Cart.selectIdCart(id_account);
             let items = await Cart.selectItems(cart.id_cart);
@@ -45,45 +47,57 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
                 data : order
             })
 
-        }else{
-            let voucherExist = await Voucher.hasId(id_voucher)
-            if(voucherExist){
-                let voucher = await Voucher.selectId(id_voucher);
-                let dateStart = new Date(voucher.date_start);
-                let dateEnd = new Date(voucher.date_end);
-                let dateNow = new Date();
+            }else{
+                let voucherExist = await Voucher.hasId(id_voucher)
+                if(voucherExist){
+                    let voucher = await Voucher.selectId(id_voucher);
+                    let dateStart = new Date(voucher.date_start);
+                    let dateEnd = new Date(voucher.date_end);
+                    let dateNow = new Date();
 
-                if(dateStart.getTime() > dateNow.getTime() || dateEnd.getTime() < dateNow.getTime()){
-                    return res.status(400).json({
-                        message: 'voucher khong hop le'
+                    if(dateStart.getTime() > dateNow.getTime() || dateEnd.getTime() < dateNow.getTime()){
+                        return res.status(400).json({
+                            message: 'voucher khong hop le'
+                        })
+                    }
+
+                    let check = await Voucher.checkIsUsed(id_account,id_voucher);
+                    if(!check){
+                        return res.status(400).json({
+                            message: 'voucher đã sử dụng, vui lòng đổi voucher khác'
+                        })
+                    }
+
+                    let order = await Orders.addOrderHasVoucher(id_account, id_voucher,address);
+                    let updateAccountVoucher = await Voucher.updateStatusUseVoucher(id_account,id_voucher);
+                    let order_details = [];
+                    let cart = await Cart.selectIdCart(id_account);
+                    let items = await Cart.selectItems(cart.id_cart);
+                    for(let i = 0; i < items.length; i ++){
+                        let product = await Product.selectId(items[i].id_product);
+                        let priceProduct = product.price -(product.price * product.discount/100);
+                        let order_dettail = await Orders.addOrderDetail(order.id_order, items[i].id_product, items[i].quantity,priceProduct);
+                        let item = await Cart.selectIdItem(cart.id_cart, items[i].id_product);
+                        await Cart.deleteCartItem(item.id_item);
+                        order_details.push(order_dettail);
+                    }
+                    order['detail'] = order_details;
+                    return res.status(200).json({
+                        message: 'them hoa don thanh cong',
+                        data : order
                     })
                 }
-
-                let order = await Orders.addOrderHasVoucher(id_account, id_voucher);
-                let updateAccountVoucher = await Voucher.updateStatusUseVoucher(id_account,id_voucher);
-                let order_details = [];
-                let cart = await Cart.selectIdCart(id_account);
-                let items = await Cart.selectItems(cart.id_cart);
-                for(let i = 0; i < items.length; i ++){
-                    let product = await Product.selectId(items[i].id_product);
-                    let priceProduct = product.price -(product.price * product.discount/100);
-                    let order_dettail = await Orders.addOrderDetail(order.id_order, items[i].id_product, items[i].quantity,priceProduct);
-                    let item = await Cart.selectIdItem(cart.id_cart, items[i].id_product);
-                    await Cart.deleteCartItem(item.id_item);
-                    order_details.push(order_dettail);
-                }
-                order['detail'] = order_details;
-                return res.status(200).json({
-                    message: 'them hoa don thanh cong',
-                    data : order
-                })
-            }
             else{
                 return res.status(400).json({
                     message: 'voucher khong ton tai',
                 })
             }
             
+            }
+        }else{
+            return res.status(400).json({
+                message: 'địa chỉ giao hàng không được để trống'
+            })
         }
     } catch (error) {
         console.log(error);

@@ -1,10 +1,10 @@
 const pool = require('../../../db');
 const db = {};
 
-db.addOrder = (id_account) => {
+db.addOrder = (id_account, address) => {
     return new Promise((resolve, reject) => {
-        pool.query("INSERT INTO orders (id_account) VALUES ($1) RETURNING *, TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time",
-            [id_account],
+        pool.query("INSERT INTO orders (id_account, address) VALUES ($1, $2) RETURNING *, TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time",
+            [id_account,address],
             (err, result) => {
                 if (err) return reject(err);
                 return resolve(result.rows[0]);
@@ -12,10 +12,10 @@ db.addOrder = (id_account) => {
     });
 }
 
-db.addOrderHasVoucher = (id_account, id_voucher) => {
+db.addOrderHasVoucher = (id_account, id_voucher, address) => {
     return new Promise((resolve, reject) => {
-        pool.query("INSERT INTO orders (id_account, id_voucher) VALUES ($1, $2) RETURNING *, TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time",
-            [id_account, id_voucher],
+        pool.query("INSERT INTO orders (id_account, id_voucher,address) VALUES ($1, $2,$3) RETURNING *, TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time",
+            [id_account, id_voucher , address],
             (err, result) => {
                 if (err) return reject(err);
                 return resolve(result.rows[0]);

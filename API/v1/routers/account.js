@@ -173,5 +173,33 @@ router.get('/information', Auth.authenGTUser, async (req, res, next) => {
         return res.sendStatus(500);
     }
 })
+//thay dổi địa chỉ
+router.put('/change-address', Auth.authenGTUser, async (req, res, next) => {
+    try {
+        let id_account = Auth.tokenData(req).id_account;
+        let role = Auth.tokenData(req).role;
+        let address = req.body.address
+
+        if(role == 0){
+            await Account.updateAddressCustomer(id_account, address)
+            data = await Account.selectInforCustomer(id_account);
+        }
+        else{
+            await Account.updateAddressEmployee(id_account, address)
+            data = await Account.selectInforEmployee(id_account);
+        }
+
+        return res.status(200).json({
+            message: 'Cập nhật địa chỉ giao hàng thành công',
+            data: data
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
+})
+
+
 
 module.exports = router;

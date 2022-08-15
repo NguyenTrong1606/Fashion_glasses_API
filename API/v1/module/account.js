@@ -80,6 +80,29 @@ db.updatePassword = (id, password) => {
     })
 }
 
+db.updateAddressCustomer = (id, address) => {
+    return new Promise((resolve, reject) => {
+        pool.query("UPDATE customer SET address=$1 WHERE id_account=$2",
+            [address, id],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows[0]);
+            })
+    })
+}
+
+db.updateAddressEmployee = (id, address) => {
+    return new Promise((resolve, reject) => {
+        pool.query("UPDATE employee SET address=$1 WHERE id_account=$2",
+            [address, id],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows[0]);
+            })
+    })
+}
+
+
 db.selectListAccountByRole = (role) => {
     return new Promise((resolve, reject) => {
         pool.query("SELECT A.id_account, E.full_name, E.email, E.phone_number, E.identification, A.account_name, E.date_of_birth, A.role, A.status, E.avatar, E.gender, E.address FROM account A INNER JOIN employee E ON A.id_account = E.id_account WHERE A.role = $1 AND A.status = 0",

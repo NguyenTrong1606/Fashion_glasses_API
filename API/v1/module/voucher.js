@@ -56,6 +56,17 @@ db.hasVoucherOfAcc= (id_account, id_voucher) => {
     })
 }
 
+db.checkIsUsed= (id_account, id_voucher) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM account_voucher WHERE id_account =$1 AND id_voucher = $2 AND status = 0",
+            [id_account, id_voucher],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rowCount > 0);
+            })
+    })
+}
+
 db.addVoucher = (title, quantity, discount, date_start, date_end, description) => {
     return new Promise((resolve, reject) => {
         pool.query("INSERT INTO voucher (title, quantity, discount, date_start, date_end, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",

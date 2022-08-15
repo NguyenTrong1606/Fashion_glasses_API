@@ -468,6 +468,12 @@ router.get('/', async (req, res, next) => {
 
         for (let productId of ids) {
             let product = await Product.selectId(productId.id_product);
+            if(product.discount > 0){
+                let valid = await Product.check(product.id_product);
+                if(valid){
+                    product = await Product.updateDiscount(product.id_product, 0);
+                }
+            }
             let images = [];
             let imgs = await Product.getAllImgById(productId.id_product);
             

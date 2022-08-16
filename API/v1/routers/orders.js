@@ -6,6 +6,7 @@ const Orders = require('../module/orders');
 const Cart = require('../module/cart');
 const Product = require('../module/product');
 const Employee = require('../module/employee');
+const Account = require('../module/account');
 
 
 //tạo hóa đơn
@@ -116,8 +117,9 @@ router.put('/:id_order/:status', Auth.authenGTModer, async (req, res, next) => {
 
         let orderExist = await Orders.hasId(id_order);
         if(orderExist){
-            if(status == 2){
-                let order_details = await Orders.getOrderDetailByIdOrder(id_order);
+            let order_details = await Orders.getOrderDetailByIdOrder(id_order);
+            if(status == 4){
+                
                 let quantityProduct = [];
                 for (let i = 0; i < order_details.length; i++){
                     let product = await Product.selectId(order_details[i].id_product);
@@ -134,6 +136,16 @@ router.put('/:id_order/:status', Auth.authenGTModer, async (req, res, next) => {
 
              }
             let order = await Orders.updateStatus(id_order, employee.id_employee, status);
+            let acc = await Account.selectId(order.id_account)
+            if(acc.role == 0){
+                acc = await Account.selectInforCustomer(order.id_account);
+            }
+            else{
+                acc = await Account.selectInforEmployee(order.id_account);
+            }
+            order['account'] = acc
+            
+            order['detail'] = order_details;
 
             return res.status(200).json({
                 message: 'cập nhật trạng thái hóa đơn thành công',
@@ -161,6 +173,7 @@ router.delete('/:id_order', Auth.authenGTUser, async (req, res, next) => {
 
         let id_account = Auth.tokenData(req).id_account;
         let id_order = req.params.id_order;
+        
 
         let checkOrderAccount = await Orders.hasOrderAccount(id_account, id_order);
         if(checkOrderAccount){
@@ -169,7 +182,7 @@ router.delete('/:id_order', Auth.authenGTUser, async (req, res, next) => {
                 await Orders.deleteOrderDetail(od_detail.id_order, od_detail.id_product);
             }
             await Orders.deleteOrder(id_order);
-            return res.status(400).json({
+            return res.status(200).json({
                 message: 'Xóa hóa đơn thành công'
             })
         }else{
@@ -289,6 +302,49 @@ router.get('/status/:status', Auth.authenGTModer, async (req, res, next) => {
 
 })
 
+
+// lấy ds order theo trạng thái
+router.get('/all', Auth.authenGTModer, async (req, res, next) => {
+    try {
+        
+
+        let orders = await Orders.getAllOrder();
+        let data =[];
+        for (let od of orders){
+            let acc = await Account.selectId(od.id_account)
+            if(acc.role == 0){
+                acc = await Account.selectInforCustomer(od.id_account);
+            }
+            else{
+                acc = await Account.selectInforEmployee(od.id_account);
+            }
+            od['account'] = acc
+            let order_details = await Orders.getOrderDetailByIdOrder(od.id_order);
+            let order =[];
+            for (let od_detail of order_details){
+                let product = await Product.selectId(od_detail.id_product);
+                od_detail['name_product'] = product.name_product;
+                order.push(od_detail);
+            }
+            od['detail'] = order;
+            data.push(od);
+        }
+        
+        return res.status(200).json({
+            message: 'lấy ds thành công',
+            data: data
+        })
+        
+
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({
+            message: 'Something wrong'
+        })
+    }
+
+})
+
 //lấy ds order đã xác nhận theo tháng
 router.get('/year/:year/month/:month', Auth.authenGTModer, async (req, res, next) => {
     try {
@@ -301,6 +357,14 @@ router.get('/year/:year/month/:month', Auth.authenGTModer, async (req, res, next
         let orders = await Orders.getListOrderByMonth(dateStart, dateEnd);
         let data =[];
         for (let od of orders){
+            let acc = await Account.selectId(od.id_account)
+            if(acc.role == 0){
+                acc = await Account.selectInforCustomer(od.id_account);
+            }
+            else{
+                acc = await Account.selectInforEmployee(od.id_account);
+            }
+            od['account'] = acc
             let order_details = await Orders.getOrderDetailByIdOrder(od.id_order);
             let order =[];
             for (let od_detail of order_details){

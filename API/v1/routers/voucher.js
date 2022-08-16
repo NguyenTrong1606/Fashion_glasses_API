@@ -208,6 +208,49 @@ router.get('/list-voucher', Auth.authenGTUser,  async (req, res, next) => {
     }
 })
 
+//lấy all voucher của tài khoản
+
+router.get('/my-voucher/all', Auth.authenGTUser,  async (req, res, next) => {
+    try {
+
+        let account_id = Auth.tokenData(req).id_account;
+            let idVouchers =  await Voucher.getAllVoucherOfAccount(account_id);
+            let data = []
+            for(let idVoucher of idVouchers){
+                let voucher = await Voucher.selectId(idVoucher.id_voucher)
+                data.push(voucher)
+            }
+            
+            return res.status(200).json({
+                message:'lấy ds sản phẩm thành công',
+                data: data
+            })
+        
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
+//lấy all voucher 
+
+router.get('/all', Auth.authenGTModer,  async (req, res, next) => {
+    try {
+            let data =  await Voucher.getAllVoucher();
+            
+            
+            return res.status(200).json({
+                message:'lấy ds sản phẩm thành công',
+                data: data
+            })
+        
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
 
 
 

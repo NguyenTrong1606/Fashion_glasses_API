@@ -48,7 +48,7 @@ db.hasIdentification = (identification) => {
 db.update = (id, phone_number, address, avatar = '') => {
     if (avatar == '') {
         return new Promise((resolve, reject) => {
-            pool.query("UPDATE employee SET phone_number=$1, address=$2 WHERE id_employee = $3 RETURNING *",
+            pool.query("UPDATE employee SET phone_number=$1, address=$2 WHERE id_employee = $3 RETURNING *, TO_CHAR(date_of_birth:: date, 'dd/mm/yyyy') AS date_of_birth",
                 [phone_number, address, id],
                 (err, result) => {
                     if (err) return reject(err);
@@ -57,7 +57,7 @@ db.update = (id, phone_number, address, avatar = '') => {
         })
     } else {
         return new Promise((resolve, reject) => {
-            pool.query("UPDATE employee SET phone_number =$1, address=$2, avatar=$3 WHERE id_employee = $4 RETURNING *",
+            pool.query("UPDATE employee SET phone_number =$1, address=$2, avatar=$3 WHERE id_employee = $4 RETURNING*, TO_CHAR(date_of_birth:: date, 'dd/mm/yyyy') AS date_of_birth",
                 [phone_number, address, avatar, id],
                 (err, result) => {
                     if (err) return reject(err);

@@ -58,7 +58,7 @@ db.hasOrderAccount = (id_account, id_order) => {
 
 db.updateStatus = (id_order, id_employee, status) => {
     return new Promise((resolve, reject) => {
-        pool.query("UPDATE orders SET id_employee = $2, status = $3 WHERE id_order = $1 RETURNING *",
+        pool.query("UPDATE orders SET id_employee = $2, status = $3 WHERE id_order = $1 RETURNING *, TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time",
             [id_order, id_employee, status],
             (err, result) => {
                 if (err) return reject(err);
@@ -107,7 +107,7 @@ db.getOrderDetailByIdOrder = (id_order) => {
 
 db.getOrders = (id_account) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT * FROM orders where id_account =$1",
+        pool.query("SELECT id_order,status,id_account,id_employee, id_voucher, address ,TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time  FROM orders where id_account =$1",
             [id_account],
             (err, result) => {
                 if (err) return reject(err);
@@ -115,6 +115,19 @@ db.getOrders = (id_account) => {
             });
     });
 }
+
+
+db.getAllOrder = () => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT id_order,status,id_account,id_employee, id_voucher, address ,TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time  FROM orders where status < 3 ORDER BY id_order  DESC",
+            [],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows);
+            });
+    });
+}
+
 
 db.getListOrderStatus = (status) => {
     return new Promise((resolve, reject) => {

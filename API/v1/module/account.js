@@ -127,7 +127,7 @@ db.selectInforCustomer = (id) => {
 
 db.selectInforEmployee = (id) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT A.id_account, E.full_name, E.email, E.phone_number, E.identification, A.account_name, E.date_of_birth, A.role, A.status, E.avatar, E.gender, E.address FROM account A INNER JOIN employee E ON A.id_account = E.id_account WHERE A.id_account = $1",
+        pool.query("SELECT A.id_account, E.full_name, E.email, E.phone_number, E.identification, A.account_name, TO_CHAR(E.date_of_birth:: date, 'dd/mm/yyyy') AS date_of_birth, A.role, A.status, E.avatar, E.gender, E.address FROM account A INNER JOIN employee E ON A.id_account = E.id_account WHERE A.id_account = $1",
             [id],
             (err, result) => {
                 if (err) return reject(err);

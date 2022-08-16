@@ -121,6 +121,28 @@ db.getListVoucherOfAccount = (id_account) => {
     })
 }
 
+db.getAllVoucherOfAccount = (id_account) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM account_voucher  WHERE id_account = $1",
+            [id_account],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows);
+            })
+    })
+}
+
+db.getAllVoucher = () => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM voucher ",
+            [],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows);
+            })
+    })
+}
+
 db.getListVoucher= () => {
     return new Promise((resolve, reject) => {
         pool.query("SELECT * FROM voucher  WHERE quantity > 0 AND date_end >= CURRENT_TIMESTAMP",

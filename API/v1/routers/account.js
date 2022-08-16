@@ -97,7 +97,7 @@ const Auth = require('../../../auth');
                     bcrypt.hash(new_password, saltRounds, async (err, hash) => {
                         new_password = hash;
                         let changePassword = await Account.updatePassword(id_account, new_password);
-
+                        
                         return res.status(200).json({
                             message: 'Thay đổi mật khẩu thành công',
                         })
@@ -173,6 +173,34 @@ router.get('/information', Auth.authenGTUser, async (req, res, next) => {
         return res.sendStatus(500);
     }
 })
+
+//lấy thông tin cá nhân của tài khoản theo id
+router.get('/:id_account', Auth.authenGTModer, async (req, res, next) => {
+    try {
+        let id_account = req.params.id_account
+
+        let acc = await Account.selectId(id_account)
+
+        
+
+        if(acc.role == 0){
+            data = await Account.selectInforCustomer(id_account);
+        }
+        else{
+            data = await Account.selectInforEmployee(id_account);
+        }
+
+        return res.status(200).json({
+            message: 'Lấy thông tin tài khoản thành công',
+            data: data
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
+})
+
 //thay dổi địa chỉ
 router.put('/change-address', Auth.authenGTUser, async (req, res, next) => {
     try {

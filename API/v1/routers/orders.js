@@ -15,12 +15,20 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
         let id_account = Auth.tokenData(req).id_account;
         let id_voucher = req.body.id_voucher;
         let address = req.body.address;
+        let cart = await Cart.selectIdCart(id_account);
+        let items = await Cart.selectItems(cart.id_cart);
+        if(!items){
+            return res.status(400).json({
+                message: 'Ko có sản phẩm nào trong giỏ hàng, ko thể thêm hóa đơn',
+            })
+        }
         if(address){
+            
+
             if(id_voucher==0){
             let order = await Orders.addOrder(id_account,address);
             let order_details = [];
-            let cart = await Cart.selectIdCart(id_account);
-            let items = await Cart.selectItems(cart.id_cart);
+            
             let quantityProduct = [];
                 for (let i = 0; i < items.length; i++){
                     let product = await Product.selectId(items[i].id_product);
@@ -72,8 +80,6 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
                     let order = await Orders.addOrderHasVoucher(id_account, id_voucher,address);
                     let updateAccountVoucher = await Voucher.updateStatusUseVoucher(id_account,id_voucher);
                     let order_details = [];
-                    let cart = await Cart.selectIdCart(id_account);
-                    let items = await Cart.selectItems(cart.id_cart);
                     for(let i = 0; i < items.length; i ++){
                         let product = await Product.selectId(items[i].id_product);
                         let priceProduct = product.price -(product.price * product.discount/100);
@@ -354,6 +360,11 @@ router.get('/year/:year/month/:month', Auth.authenGTModer, async (req, res, next
         let dateStart = year + "/"+ month +"/01";
         let dateEnd = year + "/"+ nextMonth+"/01";
 
+        if(month == 12){
+            let nextYear = year + 1
+            dateEnd = nextYear +"/01/01"
+        }
+
         let orders = await Orders.getListOrderByMonth(dateStart, dateEnd);
         let data =[];
         for (let od of orders){
@@ -387,8 +398,54 @@ router.get('/year/:year/month/:month', Auth.authenGTModer, async (req, res, next
         return res.status(500).json({
             message: 'Something wrong'
         })
+
     }
 
 })
+
+// //lấy ds order cần xử lý theo SĐT
+// router.get('/handle/', Auth.authenGTModer, async (req, res, next) => {
+//     try {
+//         let { number } = req.query;
+
+//         let accounts = await Account.getIdAccountbyNumberPhone()
+
+//         let orders = await Orders.getListOrderByMonth(dateStart, dateEnd);
+//         let data =[];
+//         for (let od of orders){
+//             let acc = await Account.selectId(od.id_account)
+//             if(acc.role == 0){
+//                 acc = await Account.selectInforCustomer(od.id_account);
+//             }
+//             else{
+//                 acc = await Account.selectInforEmployee(od.id_account);
+//             }
+//             od['account'] = acc
+//             let order_details = await Orders.getOrderDetailByIdOrder(od.id_order);
+//             let order =[];
+//             for (let od_detail of order_details){
+//                 let product = await Product.selectId(od_detail.id_product);
+//                 od_detail['name_product'] = product.name_product;
+//                 order.push(od_detail);
+//             }
+//             od['detail'] = order;
+//             data.push(od);
+//         }
+        
+//         return res.status(200).json({
+//             message: 'lấy ds thành công',
+//             data: data
+//         })
+        
+
+//     } catch (e) {
+//         console.error(e);
+//         return res.status(500).json({
+//             message: 'Something wrong'
+//         })
+        
+//     }
+
+// })
 
 module.exports =router;

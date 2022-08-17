@@ -16,18 +16,18 @@ db.hasByNameCategory = (name_category) => {
 
 db.add = (name_category) => {
     return new Promise((resolve, reject) => {
-        pool.query("INSERT INTO category (name_category) VALUES ($1) RETURNING id_category",
+        pool.query("INSERT INTO category (name_category) VALUES ($1) RETURNING *",
             [name_category],
             (err, result) => {
                 if (err) return reject(err);
-                return resolve(result.rows[0].id_category);
+                return resolve(result.rows[0]);
             });
     });
 }
 
 db.updateCategory = (id, name) => {
     return new Promise((resolve, reject) => {
-        pool.query("UPDATE category SET name_category = $2 WHERE id_category = $1",
+        pool.query("UPDATE category SET name_category = $2 WHERE id_category = $1 RETURNING *",
             [id, name],
             (err, result) => {
                 if (err) return reject(err);

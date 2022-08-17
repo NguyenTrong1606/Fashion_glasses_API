@@ -16,18 +16,18 @@ db.hasByNameBrand = (name_brand) => {
 
 db.add = (name_brand) => {
     return new Promise((resolve, reject) => {
-        pool.query("INSERT INTO brand (name_brand) VALUES ($1) RETURNING id_brand",
+        pool.query("INSERT INTO brand (name_brand) VALUES ($1) RETURNING *",
             [name_brand],
             (err, result) => {
                 if (err) return reject(err);
-                return resolve(result.rows[0].id_brand);
+                return resolve(result.rows[0]);
             });
     });
 }
 
 db.updateBrand = (id, name) => {
     return new Promise((resolve, reject) => {
-        pool.query("UPDATE brand SET name_brand = $2 WHERE id_brand = $1",
+        pool.query("UPDATE brand SET name_brand = $2 WHERE id_brand = $1 RETURNING *",
             [id, name],
             (err, result) => {
                 if (err) return reject(err);

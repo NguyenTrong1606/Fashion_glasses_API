@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
+const nodemailer = require("nodemailer");
 
 
 const router = express.Router();
@@ -228,6 +229,172 @@ router.put('/change-address', Auth.authenGTUser, async (req, res, next) => {
     }
 })
 
+
+const createCode = () => {
+    var result = '';
+    for (var i = 0; i < 6; i++) {
+        result += String(Math.floor(Math.random() * 10));
+    }
+    return result;
+}
+router.post('/forget/password', async (req, res) => {
+    try {
+        const { account_name } = req.body
+        const code = createCode()
+
+
+
+        const existAccount = await Account.selectByAccountName(account_name)
+        
+        if (!account_name) {
+            return res.status(400).json({
+                message: 'Tên tài khoản không được để trống'
+            });
+        }
+        if(!existAccount){
+            return res.status(404).json({
+                message: 'Không tồn tại tài khoản này'
+            });
+        } 
+        else {
+            let inforUser
+
+            if(existAccount.role === 0){
+                inforUser = await Account.selectInforCustomer(existAccount.id_account)
+            }
+            else{
+                inforUser = await Account.selectInforEmployee(existAccount.id_account)
+            }
+
+
+            let transporter = nodemailer.createTransport({
+                service: 'hotmail',
+                auth: {
+                    user: process.env.AUTH_EMAIL, // generated ethereal user
+                    pass: process.env.AUTH_PASS, // generated ethereal password
+                },
+            });
+
+            await transporter.sendMail({
+                from: process.env.AUTH_EMAIL, // sender address
+                to: `${inforUser.email}`, // list of receivers
+                subject: "Lấy lại mật khẩu Fashion Glasses", // Subject line
+                html: `<h3><b>Xin chao ${inforUser.full_name}</b></h3>
+                        <p>Đây là mã code của bạn:</p>
+                        <h2>&emsp;Code: ${code}</h2>
+                        <p>Quản lý Fashion Glasses</p>
+                `, // html body
+            })
+
+            const isId = await Account.isHasIdVerification(existAccount.id_account)
+
+            if (isId) {
+                await Account.updateVerification(existAccount.id_account, code)
+            } else {
+                await Account.insertVerification(existAccount.id_account, code)
+            }
+
+            return res.status(200).json({
+                message: 'Đã gửi mã xác nhận',
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500)
+    }
+})
+
+router.post('/forget/verify', async (req, res) => {
+    try {
+        const { account_name, code } = req.body
+        const existAccount = await Account.selectByAccountName(account_name)
+
+        if (!account_name || !code) {
+            return res.status(400).json({
+                message: 'Thiếu dữ liệu gửi về'
+            });
+        }
+
+
+        if (!existAccount) {
+            return res.status(404).json({
+                message: 'Không tồn tại tài khoản này'
+            });
+        }
+
+        const existEmailAndCode = await Account.isHasCodeAndEmail(existAccount.id_account, code)
+        
+        if (!existEmailAndCode) {
+            return res.status(404).json({
+                message: 'tên tài khoản và code không trùng nhau'
+            });
+        }
+
+        const isValidCode = await Account.checkTimeCode(existAccount.id_account)
+
+        if (!isValidCode) {
+            return res.status(404).json({
+                message: 'Code hết hạn '
+            });
+        }
+
+        return res.status(200).json({
+            message: 'Mã code hợp lệ',
+        })
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500)
+    }
+})
+
+
+router.post('/forget/change', async (req, res,next) => {
+    try {
+        let { account_name, code, new_password } = req.body
+        const existAccount = await Account.selectByAccountName(account_name)
+
+        if (!account_name || !code || !new_password) {
+            return res.status(400).json({
+                message: 'Thiếu dữ liệu gửi về'
+            });
+        }
+
+
+        if (!existAccount) {
+            return res.status(404).json({
+                message: 'Không tồn tại tài khoản này'
+            });
+        }
+
+        const existEmailAndCode = await Account.isHasCodeAndEmail(existAccount.id_account, code)
+        if (!existEmailAndCode) {
+            return res.status(404).json({
+                message: 'Email và code không trùng nhau'
+            });
+        }
+        const isValidCode = await Account.checkTimeCode(existAccount.id_account)
+        if (!isValidCode) {
+            return res.status(404).json({
+                message: 'Code hết hạn '
+            });
+        }
+        bcrypt.hash(new_password, saltRounds, async (err, hash) => {
+            new_password = hash;
+            await Account.updatePassword(existAccount.id_account, new_password);
+            await Account.deleteAccountVerification(existAccount.id_account)
+
+
+            return res.status(200).json({
+                message: 'Thay đổi mật khẩu thành công',
+            })
+        });
+
+
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500)
+    }
+})
 
 
 module.exports = router;

@@ -51,7 +51,7 @@ router.put('/:id_product/:quantity', Auth.authenGTUser, async (req, res, next) =
         let product = await Product.selectId(id_product);
         let img = await Product.getAllImgById(id_product)
             if(img){
-                product['img'] = img[1]
+                product['img'] = img[0]
             }
         let cartItemExist = await Cart.hasCartItem(cart.id_cart, id_product);
         if(cartItemExist){
@@ -135,7 +135,7 @@ router.get('/', Auth.authenGTUser, async (req, res, next) => {
             let product = await Product.selectId(item.id_product);
             let img = await Product.getAllImgById(product.id_product)
             if(img){
-                product['img'] = img[1]
+                product['img'] = img[0]
             }
             item['product'] = product;
             data.push(item);
@@ -169,7 +169,7 @@ router.get('/:id_product', Auth.authenGTUser, async (req, res, next) => {
             let product = await Product.selectId(item.id_product);
             let img = await Product.getAllImgById(id_product)
             if(img){
-                product['img'] = img[1]
+                product['img'] = img[0]
             }
             item['product'] = product;
         }    

@@ -77,7 +77,7 @@ db.getListProductByBrand = (id_brand ,page = 0) => {
 
 db.selectId = (id_product) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT * FROM product WHERE id_product = $1",
+        pool.query("SELECT id_product, name_product , description, price, quantity, discount, TO_CHAR(date_discount_end:: date, 'dd/mm/yyyy') AS date_discount_end , id_category, id_brand FROM product WHERE id_product = $1",
             [id_product],
             (err, result) => {
                 if (err) return reject(err);
@@ -130,6 +130,39 @@ db.hasProductInOrderDetail = (id_product) => {
     })
 }
 
+db.hasProductInCartItem = (id_product) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM cart_item WHERE id_product = $1",
+            [id_product],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rowCount > 0);
+            })
+    })
+}
+
+db.hasProductInComment = (id_product) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM comment WHERE id_product = $1",
+            [id_product],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rowCount > 0);
+            })
+    })
+}
+
+db.hasProductInReview = (id_product) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM review WHERE id_product = $1",
+            [id_product],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rowCount > 0);
+            })
+    })
+}
+
 db.deleteProduct = (idProduct) => {
     return new Promise((resolve, reject) => {
         pool.query(`DELETE FROM product WHERE id_product = $1`,
@@ -155,7 +188,7 @@ db.deleteProductIMG = (idIMG) => {
 
 db.addProduct = (name_product, description, price, quantity, discount, date_discount_end, id_category, id_brand) => {
     return new Promise((resolve, reject) => {
-        pool.query("INSERT INTO product (name_product, description, price, quantity, discount, date_discount_end, id_category, id_brand) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+        pool.query("INSERT INTO product (name_product, description, price, quantity, discount, date_discount_end, id_category, id_brand) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *, TO_CHAR(date_discount_end:: date, 'dd/mm/yyyy') AS date_discount_end",
             [name_product, description, price, quantity, discount, date_discount_end, id_category, id_brand],
             (err, result) => {
                 if (err) return reject(err);
@@ -215,7 +248,7 @@ db.updateQuantity = (id, quantity) => {
 
 db.update= (id, name_product, description, price, quantity, discount, date_discount_end) => {
     return new Promise((resolve, reject) => {
-        pool.query("UPDATE product SET name_product = $2, description = $3, price = $4, quantity = $5, discount = $6, date_discount_end = $7 WHERE id_product=$1 RETURNING *",
+        pool.query("UPDATE product SET name_product = $2, description = $3, price = $4, quantity = $5, discount = $6, date_discount_end = $7 WHERE id_product=$1 RETURNING *,TO_CHAR(date_discount_end:: date, 'dd/mm/yyyy') AS date_discount_end",
             [id, name_product, description, price, quantity, discount, date_discount_end],
             (err, result) => {
                 if (err) return reject(err);

@@ -69,7 +69,7 @@ db.checkIsUsed= (id_account, id_voucher) => {
 
 db.addVoucher = (title, quantity, discount, date_start, date_end, description) => {
     return new Promise((resolve, reject) => {
-        pool.query("INSERT INTO voucher (title, quantity, discount, date_start, date_end, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+        pool.query("INSERT INTO voucher (title, quantity, discount, date_start, date_end, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING * ,TO_CHAR(date_end:: date, 'dd/mm/yyyy') AS date_end, TO_CHAR(date_start:: date, 'dd/mm/yyyy') AS date_start",
             [title, quantity, discount, date_start, date_end, description],
             (err, result) => {
                 if (err) return reject(err);
@@ -78,10 +78,10 @@ db.addVoucher = (title, quantity, discount, date_start, date_end, description) =
     })
 }
 
-db.updateVoucher= (id, quantity, discount, date_start, date_end, description) => {
+db.updateVoucher= (id, quantity, description) => {
     return new Promise((resolve, reject) => {
-        pool.query("UPDATE voucher SET quantity = $2, discount = $3, date_start = $4, date_end = $5, description = $6 WHERE id_voucher=$1 RETURNING *",
-            [id, quantity, discount, date_start, date_end, description],
+        pool.query("UPDATE voucher SET quantity = $2, description = $3 WHERE id_voucher=$1 RETURNING *, TO_CHAR(date_end:: date, 'dd/mm/yyyy') AS date_end ,TO_CHAR(date_start:: date, 'dd/mm/yyyy') AS date_start",
+            [id, quantity, description],
             (err, result) => {
                 if (err) return reject(err);
                 return resolve(result.rows[0]);
@@ -134,7 +134,7 @@ db.getAllVoucherOfAccount = (id_account) => {
 
 db.getAllVoucher = () => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT * FROM voucher ",
+        pool.query("SELECT *, TO_CHAR(date_end:: date, 'dd/mm/yyyy') AS date_end ,TO_CHAR(date_start:: date, 'dd/mm/yyyy') AS date_start FROM voucher ORDER BY id_voucher DESC",
             [],
             (err, result) => {
                 if (err) return reject(err);
@@ -170,7 +170,7 @@ db.check = (id_voucher)=>{
 
 db.selectId = (id_voucher) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT * FROM voucher WHERE id_voucher = $1",
+        pool.query("SELECT *, TO_CHAR(date_end:: date, 'dd/mm/yyyy') AS date_end ,TO_CHAR(date_start:: date, 'dd/mm/yyyy') AS date_start FROM voucher WHERE id_voucher = $1",
             [id_voucher],
             (err, result) => {
                 if (err) return reject(err);

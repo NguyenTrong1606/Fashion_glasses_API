@@ -29,6 +29,16 @@ router.post('/', Auth.authenGTModer, async (req, res, next) => {
         console.log(req.body)
 
         if (name_product && price && quantity && id_category && id_brand) { 
+            if(id_category === 0){
+                return res.status(400).json({
+                    message: 'Vui lòng chọn danh mục sản phẩm'
+                })
+            }
+            if(id_brand === 0){
+                return res.status(400).json({
+                    message: 'Vui lòng chọn nhãn hiệu sản phẩm'
+                })
+            }
             //Kiểm tra  tên sản phẩm có tồn tại không
             let existNameProduct = await Product.hasNameProduct(name_product);
             if (existNameProduct) {
@@ -54,7 +64,7 @@ router.post('/', Auth.authenGTModer, async (req, res, next) => {
                         message: "discount phải là số nguyên 0<= discount <=100"
                     })
                 }
-                if(!date_discount_end && discount){
+                if(!date_discount_end && discount>0){
                     return res.status(400).json({
                         message: "Nếu có discount thì phải có ngày kết thúc!"
                     })
@@ -97,36 +107,44 @@ router.post('/', Auth.authenGTModer, async (req, res, next) => {
                 }
 
 
+
                     // Thêm sản phẩm
-            let productResult = await Product.addProduct(name_product, description, price, quantity, discount, date_discount_end, id_category, id_brand);
+            let productResult = await Product.addProduct(name_product, description, price, quantity, discount, date_discount_end===""?new Date():date_discount_end, id_category, id_brand);
+           
             console.log(productResult.id_product);
             let img1 = await Product.addIMGProduct(productResult.id_product, IMG1Path);
             let img =[];
             img.push(img1)
+
             if(IMG2Path){
                 let img2 = await Product.addIMGProduct(productResult.id_product, IMG2Path);
                 img.push(img2)
+
             }
+            
             if(IMG3Path){
                 let img3 = await Product.addIMGProduct(productResult.id_product, IMG3Path);
                 img.push(img3)
+
             }
             if(IMG4Path){
                 let img4 = await Product.addIMGProduct(productResult.id_product, IMG4Path);
                 img.push(img4)
+
             }
             if(IMG5Path){
                 let img5 = await Product.addIMGProduct(productResult.id_product, IMG5Path);
-                img.push(img4)
+                img.push(img5)
             }
+
+            productResult['images'] = img
             
 
 
-                    res.status(201).json({
+                    res.status(200).json({
                         message: 'Thêm sản phẩm thành công',
                         data: {
                             product: productResult,
-                            img: img
                         }
                     })
             }
@@ -360,7 +378,14 @@ router.put('/:id_product', Auth.authenGTModer, async (req, res, next) => {
                             })
                         }
                     }
-                    let result = await Product.update(id_product,name_product, description, price, quantity, discount, date_discount_end);
+                    let result = await Product.update(id_product,name_product, description, price, quantity, discount, date_discount_end===""?new Date():date_discount_end);
+                    let images = []
+                    let imgs = await Product.getAllImgById(id_product);
+        
+                    for(let i = 0; i< imgs.length; i++){
+                        images.push(imgs[i].image);
+                    }
+                    result['images'] = images
                     return res.status(200).json({
                         message: 'cập nhật sản phẩm thành công',
                         data : result
@@ -384,6 +409,13 @@ router.put('/:id_product', Auth.authenGTModer, async (req, res, next) => {
                             }
                         }
                         let result = await Product.update(id_product ,name_product, description, price, quantity, discount, date_discount_end);
+                        let images = []
+                        let imgs = await Product.getAllImgById(id_product);
+            
+                        for(let i = 0; i< imgs.length; i++){
+                            images.push(imgs[i].image);
+                        }
+                        result['images'] = images
                         return res.status(200).json({
                             message: 'cập nhật sản phẩm thành công',
                             data : result
@@ -391,7 +423,7 @@ router.put('/:id_product', Auth.authenGTModer, async (req, res, next) => {
                     }
                     else{
                         return res.status(400).json({
-                            message: 'Tên sản phẩm này được đặt cho 1 sản phẩm khác',
+                            message: 'Tên sản phẩm này đã được sử dụng trước đây',
                         })
                     }
                     
@@ -422,7 +454,15 @@ router.delete('/delete/:id_product', Auth.authenGTModer, async (req, res, next) 
         let idProduct = req.params.id_product;
         
         let existProductInOrder = await Product.hasProductInOrderDetail(idProduct);
-        if(!existProductInOrder){
+        let existProductInItem = await Product.hasProductInCartItem(idProduct);
+        let existProductInComment = await Product.hasProductInComment(idProduct);
+        let existProductInReview = await Product.hasProductInReview(idProduct);
+        if(existProductInOrder  || existProductInItem || existProductInComment || existProductInReview){
+            return res.status(400).json({
+                message: 'Sản phẩm này không thể xóa!'
+            })
+        }
+        else{
             let imgs = await Product.getAllIdImgById(idProduct);
             for(let i = 0; i < imgs.length; i++){
                 await Product.deleteProductIMG(imgs[i].id_image);
@@ -431,11 +471,6 @@ router.delete('/delete/:id_product', Auth.authenGTModer, async (req, res, next) 
             await Product.deleteProduct(idProduct);
             res.status(200).json({
                 message: 'Xóa sản phẩm thành công',
-            })
-        }
-        else{
-            return res.status(400).json({
-                message: 'Sản phẩm này không thể xóa!'
             })
         }
 

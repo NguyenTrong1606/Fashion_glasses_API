@@ -37,23 +37,23 @@ router.post('/', Auth.authenGTModer, async (req, res, next) => {
                     })
                 }
 
-                if(discount< 0 || discount >100){
+                if(discount<= 0 || discount >100){
                     return res.status(400).json({
-                        message: "discount phải là số nguyên 0<= discount <=100"
+                        message: "discount phải là số nguyên 0 < discount <=100"
                     })
                 }
                 
                     // Thêm voucher
                 let voucherResult = await Voucher.addVoucher(title, quantity, discount, date_start, date_end, description);
             
-                    return res.status(201).json({
+                    return res.status(200).json({
                         message: 'Thêm sản phẩm thành công',
                         data: voucherResult
                     })
             }
         } else {
             res.status(400).json({
-                message: 'Thiếu dữ liệu'
+                message: 'Không được để trống dữ liệu'
             })
         }
     } catch (error) {
@@ -67,34 +67,14 @@ router.put('/:id_voucher', Auth.authenGTModer, async (req, res, next) => {
     try {
 
         let id_voucher = req.params.id_voucher;
-        let {quantity, discount, date_start, date_end, description} = req.body;
+        let {quantity, description} = req.body;
         let voucherExist = await Voucher.hasId(id_voucher);
         if(voucherExist){
-            if(quantity && discount && date_start && date_end && description){
-                    let dateNow = new Date();
-                    let dateStart = new Date(date_start);
-                    let dateEnd = new Date(date_end);
-                    if(dateStart < dateNow){
-                        return res.status(400).json({
-                            message: 'Ngày bắt đầu phải lớn hơn hiện tại',
-                        })
-                    }
-
-                    if(dateStart >= dateEnd){
-                        return res.status(400).json({
-                            message: 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc',
-                        })
-                    }
-                    if(discount< 0 || discount >100){
-                        return res.status(400).json({
-                            message: "discount phải là số nguyên 0<= discount <=100"
-                        })
-                    }
+            if(quantity !=="" && description){
                     
-                        // cập nhật voucher
-                    let voucherUpdate = await Voucher.updateVoucher(id_voucher, quantity, discount, date_start, date_end, description);
+                    let voucherUpdate = await Voucher.updateVoucher(id_voucher, quantity, description);
                 
-                    return res.status(201).json({
+                    return res.status(200).json({
                         message: 'cập nhật voucher thành công',
                         data: voucherUpdate
                     })
@@ -189,7 +169,7 @@ router.get('/list-voucher', Auth.authenGTUser,  async (req, res, next) => {
         let vouchers =  await Voucher.getListVoucher();
         let data = [];
         for(let i = 0; i < vouchers.length; i++ ){
-            let statusVoucher = await Voucher.hasVoucherOfAcc(vouchers[i].id_voucher);
+            let statusVoucher = await Voucher.hasVoucherOfAcc(account_id,vouchers[i].id_voucher);
             if(!statusVoucher) {
                 let myVoucher = await Voucher.selectId(vouchers[i].id_voucher);
                 data.push(myVoucher);

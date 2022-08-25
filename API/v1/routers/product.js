@@ -205,9 +205,9 @@ router.get('/all', async (req, res, next) => {
 
 
 //lấy 4 sản phẩm bất kif
-router.get('/ramdom', async (req, res, next) => {
+router.get('/random', async (req, res, next) => {
     try {
-        let productsID  = await Product.getListProductRamdom();
+        let productsID  = await Product.getListProductRandom();
         
         let data = [];
 
@@ -327,6 +327,51 @@ router.get('/brand/:id_brand', async (req, res, next) => {
     }
 })
 
+//lọc sản phẩm
+
+router.get('/category/:id_category/brand/:id_brand', async (req, res, next) => {
+    try {
+        let page = req.query.page;
+        let idBrand = req.params.id_brand;
+        let idCategory = req.params.id_category;
+        let productsID ;
+        if(page)
+            productsID = await Product.filterProduct(idCategory, idBrand, page);
+        else
+            productsID = await Product.filterProduct(idCategory, idBrand);
+        
+
+        let data = [];
+
+        for(let i = 0; i < productsID.length; i++){
+            let product = await Product.selectId(productsID[i].id_product);
+            if(product.discount > 0){
+                let valid = await Product.check(product.id_product);
+                if(valid){
+                    product = await Product.updateDiscount(productsID[i].id_product, 0);
+                }
+            }
+            let images = [];
+            let imgs = await Product.getAllImgById(product.id_product);
+            
+            for(let i = 0; i< imgs.length; i++){
+                images.push(imgs[i].image);
+            }
+            product['images'] = images;
+            data.push(product);
+        }
+
+        
+        return res.status(200).json({
+            message:'lấy ds sản phẩm thành công',
+            data : data
+        })
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+})
+
 //lấy ra 1 sản phẩm có id
 router.get('/:id_product', async (req, res, next) => {
     try {
@@ -335,7 +380,10 @@ router.get('/:id_product', async (req, res, next) => {
         let images = [];
         let product = await Product.selectId(product_id);
         let imgs = await Product.getAllImgById(product_id);
-        
+        let category = await Product.selectCategory(product.id_category)
+        product['category'] = category.name_category
+        let brand = await Product.selectBrand(product.id_brand)
+        product['brand'] = brand.name_brand
         for(let i = 0; i< imgs.length; i++){
             images.push(imgs[i].image);
         }

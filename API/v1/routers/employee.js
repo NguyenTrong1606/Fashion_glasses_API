@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 const Auth = require('../../../auth');
-
+const nodemailer = require("nodemailer");
 const Account = require('../module/account');
 const Employee = require('../module/employee');
 const Cart  = require('../module/cart');
@@ -18,6 +18,7 @@ const MyDrive = require('../../../drive');
  router.post('/', Auth.authenAdmin, async (req, res, next) => {
     try {
         let { full_name, email, phone_number, identification, date_of_birth, account_name, password, gender, address } = req.body;
+        let pw = password
 
         if (account_name && full_name && email && password && phone_number && identification && date_of_birth && gender && address) {
             let role = 1;
@@ -61,6 +62,24 @@ const MyDrive = require('../../../drive');
                 let acc = {account_name, password, role, status};
                 let id_account = await Account.add(acc);
                 let employee ={full_name, email, phone_number, identification, date_of_birth, avatar, gender, address, id_account}
+                let transporter = nodemailer.createTransport({
+                    service: 'hotmail',
+                    auth: {
+                        user: process.env.AUTH_EMAIL, // generated ethereal user
+                        pass: process.env.AUTH_PASS, // generated ethereal password
+                    },
+                });
+    
+                await transporter.sendMail({
+                    from: process.env.AUTH_EMAIL, // sender address
+                    to: `${email}`, // list of receivers
+                    subject: "Gửi mật khẩu Fashion Glasses", // Subject line
+                    html: `<h3><b>Xin chao ${full_name}</b></h3>
+                            <p>Đây là mật khẩu của bạn:</p>
+                            <h2>&emsp;Password: ${pw}</h2>
+                            <p>Quản lý Fashion Glasses</p>
+                    `, // html body
+                })
                 let insertEmployee = await Employee.add(employee);
                 let insertCart = await Cart.add(id_account);
                 res.status(201).json({

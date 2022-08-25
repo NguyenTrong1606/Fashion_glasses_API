@@ -179,6 +179,17 @@ db.selectId = (id_voucher) => {
     })
 }
 
+db.getVoucherId = (id_voucher) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM voucher WHERE id_voucher = $1",
+            [id_voucher],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows[0]);
+            })
+    })
+}
+
 db.getSL1Voucher = (id_voucher) => {
     return new Promise((resolve, reject) => {
         pool.query("SELECT quantity FROM voucher  WHERE id_voucher = $1",

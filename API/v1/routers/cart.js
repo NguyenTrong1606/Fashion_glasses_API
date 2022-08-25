@@ -155,8 +155,8 @@ router.get('/', Auth.authenGTUser, async (req, res, next) => {
     }
 
 })
-//lấy 1 cartItem
 
+//lấy 1 cartItem
 router.get('/:id_product', Auth.authenGTUser, async (req, res, next) => {
     try {
 

@@ -29,7 +29,7 @@ router.post('/:id_product', Auth.authenGTUser, async (req, res, next) => {
             for (let od of listOrder){
                 let order_details = await Orders.getOrderDetailByIdOrder(od.id_order);
                 for (let od_detail of order_details){
-                    if(od_detail.id_product == id_product){
+                    if(od.status === 3 && od_detail.id_product == id_product){
                         checkBuy = true;
                     }
                 }

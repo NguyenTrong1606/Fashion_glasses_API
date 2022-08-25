@@ -26,8 +26,7 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
             
 
             if(id_voucher==0){
-            let order = await Orders.addOrder(id_account,address);
-            let order_details = [];
+            
             
             let quantityProduct = [];
                 for (let i = 0; i < items.length; i++){
@@ -40,6 +39,8 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
                     }
                     quantityProduct.push(quantity)                    
                 }
+            let order = await Orders.addOrder(id_account,address);
+            let order_details = [];
             for(let i = 0; i < items.length; i ++){
                 let product = await Product.selectId(items[i].id_product);
                 let priceProduct = product.price -(product.price * product.discount/100);
@@ -59,7 +60,7 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
             }else{
                 let voucherExist = await Voucher.hasId(id_voucher)
                 if(voucherExist){
-                    let voucher = await Voucher.selectId(id_voucher);
+                    let voucher = await Voucher.getVoucherId(id_voucher);
                     let dateStart = new Date(voucher.date_start);
                     let dateEnd = new Date(voucher.date_end);
                     let dateNow = new Date();
@@ -77,13 +78,28 @@ router.post('/', Auth.authenGTUser, async (req, res, next) => {
                         })
                     }
 
+                    let quantityProduct = [];
+                    for (let i = 0; i < items.length; i++){
+                        let product = await Product.selectId(items[i].id_product);
+                        let quantity = +product.quantity - +items[i].quantity;
+                        if(quantity < 0){
+                            return res.status(400).json({
+                                message: `Số lượng sản phẩm ${product.name_product} trong kho không đủ, chỉ còn ${product.quantity} sản phẩm`,
+                            }) 
+                        }
+                        quantityProduct.push(quantity)                    
+                    }
+
                     let order = await Orders.addOrderHasVoucher(id_account, id_voucher,address);
                     let updateAccountVoucher = await Voucher.updateStatusUseVoucher(id_account,id_voucher);
+
                     let order_details = [];
                     for(let i = 0; i < items.length; i ++){
                         let product = await Product.selectId(items[i].id_product);
                         let priceProduct = product.price -(product.price * product.discount/100);
                         let order_dettail = await Orders.addOrderDetail(order.id_order, items[i].id_product, items[i].quantity,priceProduct);
+                        if(quantityProduct[i] == 0) await Product.updateQuantity(items[i].id_product, 0)
+                        else await Product.updateQuantity(items[i].id_product, quantityProduct[i])
                         let item = await Cart.selectIdItem(cart.id_cart, items[i].id_product);
                         await Cart.deleteCartItem(item.id_item);
                         order_details.push(order_dettail);
@@ -126,12 +142,12 @@ router.put('/:id_order/:status', Auth.authenGTModer, async (req, res, next) => {
             let order_details = await Orders.getOrderDetailByIdOrder(id_order);
             if(status == 4){
                 
-                let quantityProduct = [];
+                // let quantityProduct = [];
                 for (let i = 0; i < order_details.length; i++){
                     let product = await Product.selectId(order_details[i].id_product);
                     let quantity = +product.quantity +order_details[i].quantity;
                     console.log(quantity); 
-                    await Product.updateQuantity(order_details[i].id_product, quantity)                 
+                    await Product.updateQuantity(order_details[i].id_product, quantity)               
                 }
 
                 // for(let i = 0; i < order_details.length; i++){
@@ -150,6 +166,10 @@ router.put('/:id_order/:status', Auth.authenGTModer, async (req, res, next) => {
                 acc = await Account.selectInforEmployee(order.id_account);
             }
             order['account'] = acc
+            for (let i = 0; i < order_details.length; i++){
+                let product = await Product.selectId(order_details[i].id_product);
+                order_details[i]['name_product'] = product.name_product              
+                }
             
             order['detail'] = order_details;
 
@@ -160,6 +180,62 @@ router.put('/:id_order/:status', Auth.authenGTModer, async (req, res, next) => {
         }else{
             return res.status(400).json({
                 message: 'hóa đơn không tồn tại'
+            }) 
+        }
+        
+
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({
+            message: 'Something wrong'
+        })
+    }
+
+})
+
+
+
+
+router.put('/customer/:id_order/update', Auth.authenGTUser, async (req, res, next) => {
+    try {
+
+        let id_account = Auth.tokenData(req).id_account;
+        let id_order = req.params.id_order;
+        let acc = await Account.selectId(id_account)
+            if(acc.role == 0){
+                acc = await Account.selectInforCustomer(id_account);
+            }
+            else{
+                acc = await Account.selectInforEmployee(id_account);
+            }
+
+        let checkOrderAccount = await Orders.hasOrderAccount(id_account, id_order);
+        if(checkOrderAccount){
+            let order_details = await Orders.getOrderDetailByIdOrder(id_order);                
+                for (let i = 0; i < order_details.length; i++){
+                    let product = await Product.selectId(order_details[i].id_product);
+                    let quantity = +product.quantity +order_details[i].quantity; 
+                    await Product.updateQuantity(order_details[i].id_product, quantity)               
+                }
+
+            let order = await Orders.updateStatus(id_order, null , 4 );
+            order['account'] = acc
+            let detail =[]
+            for (let i = 0; i < order_details.length; i++){
+                let product = await Product.selectId(order_details[i].id_product);
+                order_details[i]['name_product'] = product.name_product
+                detail.push(order_details[i])              
+                }
+            
+            order['detail'] = detail;
+
+            return res.status(200).json({
+                message: 'hủy hóa đơn thành công',
+                data : order
+            }) 
+        }else{
+            return res.status(400).json({
+                message: 'Không thể hủy hóa đơn này'
             }) 
         }
         
@@ -196,6 +272,9 @@ router.delete('/:id_order', Auth.authenGTUser, async (req, res, next) => {
                 message: 'Không thể xóa hóa đơn này'
             })
         }
+
+    
+        
         
 
     } catch (e) {

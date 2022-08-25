@@ -107,7 +107,7 @@ db.getOrderDetailByIdOrder = (id_order) => {
 
 db.getOrders = (id_account) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT id_order,status,id_account,id_employee, id_voucher, address ,TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time  FROM orders where id_account =$1",
+        pool.query("SELECT id_order,status,id_account,id_employee, id_voucher, address ,TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time  FROM orders where id_account =$1 ORDER BY id_order  DESC",
             [id_account],
             (err, result) => {
                 if (err) return reject(err);
@@ -144,7 +144,7 @@ db.getListOrderStatus = (status) => {
 
 db.getListOrderByMonth = (dateStart, dateEnd) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT id_order,status,id_account,id_employee, id_voucher, address ,TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time FROM orders where status = 3 AND date_create > $1::date AND date_create < $2::date ",
+        pool.query("SELECT id_order,status,id_account,id_employee, id_voucher, address ,TO_CHAR(date_create:: date, 'dd/mm/yyyy') AS day, TO_CHAR(date_create:: time, 'hh24:mi') AS time FROM orders Where status = 3 AND date_create > $1::date AND date_create < $2::date ORDER BY id_order  DESC",
             [dateStart, dateEnd],
             (err, result) => {
                 if (err) return reject(err);

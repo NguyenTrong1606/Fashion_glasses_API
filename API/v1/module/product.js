@@ -22,7 +22,7 @@ db.getListProduct = (page = 0) => {
 
 }
 
-db.getListProductRamdom = () => {
+db.getListProductRandom = () => {
         return new Promise((resolve, reject) => {
             pool.query("SELECT id_product FROM product WHERE quantity  > 0 ORDER BY random() limit 4",
                 [], (err, result) => {
@@ -75,10 +75,53 @@ db.getListProductByBrand = (id_brand ,page = 0) => {
 
 }
 
+db.filterProduct= (id_category, id_brand ,page = 0) => {
+    if (page === 0) {
+        return new Promise((resolve, reject) => {
+            pool.query("SELECT id_product FROM product WHERE id_category =$1 AND id_brand = $2  ORDER BY discount DESC",
+                [id_category,id_brand], (err, result) => {
+                    if (err) return reject(err);
+                    return resolve(result.rows);
+                })
+        })
+    } else {
+        return new Promise((resolve, reject) => {
+            pool.query("SELECT id_product FROM product WHERE  id_category =$1 AND id_brand = $2 ORDER BY discount DESC LIMIT 12 OFFSET $2",
+                [id_category, id_brand, (page - 1) * 12], (err, result) => {
+                    if (err) return reject(err);
+                    return resolve(result.rows);
+                })
+        })
+    }
+
+}
+
 db.selectId = (id_product) => {
     return new Promise((resolve, reject) => {
         pool.query("SELECT id_product, name_product , description, price, quantity, discount, TO_CHAR(date_discount_end:: date, 'dd/mm/yyyy') AS date_discount_end , id_category, id_brand FROM product WHERE id_product = $1",
             [id_product],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows[0]);
+            })
+    })
+}
+
+db.selectCategory = (id_category) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM category WHERE id_category = $1",
+            [id_category],
+            (err, result) => {
+                if (err) return reject(err);
+                return resolve(result.rows[0]);
+            })
+    })
+}
+
+db.selectBrand = (id_brand) => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM brand WHERE id_brand = $1",
+            [id_brand],
             (err, result) => {
                 if (err) return reject(err);
                 return resolve(result.rows[0]);
